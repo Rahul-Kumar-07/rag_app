@@ -1,12 +1,8 @@
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
 from core.llm import llm
+from core.prompts import QUERY_REWRITE_PROMPT
 
-rewrite_prompt = ChatPromptTemplate.from_template("""
-Rewrite the user query into a standalone,
-search optimized query.
+rewrite_prompt = ChatPromptTemplate.from_template(QUERY_REWRITE_PROMPT)
 
-Query:
-{query}
-""")
-
-query_rewriter = rewrite_prompt | llm
+query_rewriter = rewrite_prompt | llm | StrOutputParser()

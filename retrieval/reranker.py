@@ -1,22 +1,48 @@
-from sentence_transformers import CrossEncoder
-
-reranker = CrossEncoder(
-    "BAAI/bge-reranker-base"
-)
+from core.llm import llm
 
 def rerank(query, docs):
 
-    pairs = [
-        (query, d.page_content)
-        for d in docs
-    ]
+    scored_docs = []
 
-    scores = reranker.predict(pairs)
+    for doc in docs:
 
-    ranked = sorted(
-        zip(docs, scores),
-        key=lambda x: x[1],
+        prompt = f"""
+        Rate how relevant this document is
+        to the query.
+
+        Query:
+        {query}
+
+        Document:
+        {doc.page_content}
+
+        Return ONLY a number from 1 to 10.
+        """
+
+        try:
+
+            response = llm.invoke(prompt)
+
+            score = float(
+                response.content.strip()
+            )
+
+        except:
+
+            score = 0
+
+        scored_docs.append(
+            (score, doc)
+        )
+
+    scored_docs.sort(
+        key=lambda x: x[0],
         reverse=True
     )
 
-    return [d for d, _ in ranked[:5]]
+    reranked_docs = [
+        doc
+        for _, doc in scored_docs
+    ]
+
+    return reranked_docs[:5]

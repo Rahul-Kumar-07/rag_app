@@ -1,30 +1,95 @@
-from rank_bm25 import BM25Okapi
+import re
 
-class BM25Retriever:
+class HybridRetriever:
 
-    def __init__(self, documents):
+    def __init__( self, vectorstore ):
+        self.vectorstore = vectorstore
+        
 
-        self.documents = documents
+    def retrieve(self, query, k=10 ):
 
-        self.tokenized_docs = [
-            doc.page_content.split()
-            for doc in documents
-        ]
+        # -----------------------------
+        # Vector Search
+        # -----------------------------
 
-        self.bm25 = BM25Okapi(self.tokenized_docs)
+        vector_docs = (
 
-    def search(self, query, k=5):
+            self.vectorstore
+            .similarity_search(
 
-        tokenized_query = query.split()
+                query,
 
-        scores = self.bm25.get_scores(
-            tokenized_query
+                k=k
+            )
         )
 
-        ranked = sorted(
-            zip(self.documents, scores),
-            key=lambda x: x[1],
-            reverse=True
-        )
+        # -----------------------------
+        # Exact Keyword Boost
+        # -----------------------------
 
-        return [doc for doc, _ in ranked[:k]]
+        keyword_docs = []
+
+        keywords = query.lower().split()
+
+        for doc in vector_docs:
+
+            content = (
+                doc.page_content.lower()
+            )
+
+            if any(
+
+                keyword in content
+
+                for keyword in keywords
+            ):
+
+                keyword_docs.append(doc)
+
+        # -----------------------------
+        # Email Special Handling
+        # -----------------------------
+
+        if "email" in query.lower():
+
+            email_pattern = (
+                r"[a-zA-Z0-9._%+-]+@"
+                r"[a-zA-Z0-9.-]+\."
+                r"[a-zA-Z]{2,}"
+            )
+
+            for doc in vector_docs:
+
+                if re.search(
+
+                    email_pattern,
+
+                    doc.page_content
+                ):
+
+                    keyword_docs.insert(
+                        0,
+                        doc
+                    )
+
+        # -----------------------------
+        # Merge Results
+        # -----------------------------
+
+        merged = []
+
+        seen = set()
+
+        for doc in (
+            keyword_docs + vector_docs
+        ):
+
+            content = doc.page_content
+
+            if content not in seen:
+
+                merged.append(doc)
+
+                seen.add(content)
+
+        return merged[:k]

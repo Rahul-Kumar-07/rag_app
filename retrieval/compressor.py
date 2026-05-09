@@ -1,17 +1,41 @@
-from langchain.retrievers.document_compressors import (
-    EmbeddingsFilter
-)
+from core.llm import llm
 
-from core.embeddings import embeddings
+def compress_docs( query, docs):
 
-compressor = EmbeddingsFilter(
-    embeddings=embeddings,
-    similarity_threshold=0.75
-)
+    compressed_docs = []
 
-async def compress_docs(query, docs):
+    for doc in docs:
 
-    return await compressor.acompress_documents(
-        docs,
-        query
-    )
+        prompt = f"""
+        You are a context compressor
+        for a RAG system.
+
+        Extract ONLY the information
+        relevant to answering the query.
+
+        Remove irrelevant details.
+
+        Query:
+        {query}
+
+        Document:
+        {doc.page_content}
+        """
+
+        response = llm.invoke(
+            prompt
+        )
+
+        compressed_text = (
+            response.content
+        )
+
+        doc.page_content = (
+            compressed_text
+        )
+
+        compressed_docs.append(
+            doc
+        )
+
+    return compressed_docs

@@ -2,7 +2,7 @@ from langchain_community.document_loaders import (
     PyPDFLoader,
     CSVLoader,
     TextLoader,
-    UnstructuredWordDocumentLoader
+    Docx2txtLoader
 )
 
 from langchain_core.documents import Document
@@ -23,7 +23,7 @@ def load_file(path: str):
         return TextLoader(path).load()
 
     elif path.endswith(".docx"):
-        return UnstructuredWordDocumentLoader(path).load()
+        return Docx2txtLoader(path).load()
 
     elif any(path.endswith(ext) for ext in SUPPORTED_IMAGES):
         text = extract_text_from_image(path)

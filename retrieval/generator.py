@@ -7,21 +7,9 @@ from langchain_core.output_parsers import (
 )
 
 from core.llm import llm
+from core.prompts import GENERATOR_PROMPT
 
-prompt = ChatPromptTemplate.from_template(
-    """
-    You are a helpful AI assistant.
-
-    Answer ONLY using
-    the provided context.
-
-    Context:
-    {context}
-
-    Question:
-    {question}
-    """
-)
+prompt = ChatPromptTemplate.from_template(GENERATOR_PROMPT)
 
 generator = (
     prompt

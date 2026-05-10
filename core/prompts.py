@@ -81,3 +81,21 @@ QUERY_REWRITE_PROMPT =  """
     User Query:
     {query}
 """
+
+
+# Prompt for generator.py )
+GENERATOR_PROMPT = """
+    You are a helpful AI assistant.
+
+    Answer ONLY using
+    the provided context.
+
+    If answer is not in context, say:
+    "Sorry, I could not find that information in the doc you provided."
+
+    Context:
+    {context}
+
+    Question:
+    {question}
+"""

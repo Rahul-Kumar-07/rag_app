@@ -1,42 +1,63 @@
+import streamlit as st
+
 from pinecone import Pinecone
 from pinecone import ServerlessSpec
 
-from langchain_community.vectorstores import Pinecone as PineconeVectorStore
+from langchain_community.vectorstores import (
+    Pinecone as PineconeVectorStore
+)
 
 from core.config import (
     PINECONE_API_KEY,
     PINECONE_INDEX_NAME
 )
 
-from core.embeddings import embeddings
-
-pc = Pinecone(
-    api_key=PINECONE_API_KEY
+from core.embeddings import (
+    embeddings
 )
 
-existing_indexes = [
-    index["name"]
-    for index in pc.list_indexes()
-]
+# -----------------------------------
+# Cached VectorStore Initialization
+# -----------------------------------
 
-if PINECONE_INDEX_NAME not in existing_indexes:
+@st.cache_resource
+def get_vectorstore():
 
-    pc.create_index(
-        name=PINECONE_INDEX_NAME,
-        dimension=3072,
-        metric="cosine",
-        spec=ServerlessSpec(
-            cloud="aws",
-            region="us-east-1"
-        )
+    pc = Pinecone(
+        api_key=PINECONE_API_KEY
     )
 
-index = pc.Index(
-    PINECONE_INDEX_NAME
-)
+    existing_indexes = [
+        index["name"]
+        for index in pc.list_indexes()
+    ]
 
-vectorstore = PineconeVectorStore(
-    index,
-    embeddings,
-    text_key="text"
+    if PINECONE_INDEX_NAME not in existing_indexes:
+
+        pc.create_index(
+            name=PINECONE_INDEX_NAME,
+            dimension=3072,
+            metric="cosine",
+            spec=ServerlessSpec(
+                cloud="aws",
+                region="us-east-1"
+            )
+        )
+
+    index = pc.Index(
+        PINECONE_INDEX_NAME
+    )
+
+    vectorstore = PineconeVectorStore(
+        index=index,
+        embedding=embeddings,
+        text_key="text"
+    )
+    return vectorstore, index
+
+# -----------------------------------
+# Shared Cached Instances
+# -----------------------------------
+vectorstore, pinecone_index = (
+    get_vectorstore()
 )

@@ -6,7 +6,7 @@ class GraphState(TypedDict):
 
     question: str
 
-    # user_id: str
+    user_id: str
 
     rewritten_question: str
 

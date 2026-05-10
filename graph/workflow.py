@@ -1,3 +1,5 @@
+import streamlit as st
+
 from langgraph.graph import StateGraph, END
 
 from graph.state import GraphState
@@ -64,9 +66,8 @@ def retrieve(state: GraphState):
     )
 
     docs = hybrid.retrieve(
-
         query=rewritten_question,
-
+        user_id=state["user_id"]
     )
 
     # print("\n\nRETRIEVED DOCS:\n")
@@ -141,74 +142,84 @@ def generate(state: GraphState):
 # Build Graph
 # -----------------------------------
 
-builder = StateGraph(GraphState)
+@st.cache_resource
+def build_graph():
+    
+    builder = StateGraph(GraphState)
 
-builder.add_node(
-    "query_rewrite",
-    query_rewrite
+    builder.add_node(
+        "query_rewrite",
+        query_rewrite
+        )
+
+    # builder.add_node(
+    #     "rag",
+    #     retrieve_and_generate
+    # )
+
+    builder.add_node(
+        "retrieve",
+        retrieve
     )
 
-# builder.add_node(
-#     "rag",
-#     retrieve_and_generate
-# )
+    builder.add_node(
+        "rerank",
+        rerank_docs
+    )
 
-builder.add_node(
-    "retrieve",
-    retrieve
-)
+    builder.add_node(
+        "compress",
+        compress
+    )
 
-builder.add_node(
-    "rerank",
-    rerank_docs
-)
-
-builder.add_node(
-    "compress",
-    compress
-)
-
-builder.add_node(
-    "generate",
-    generate
-)
+    builder.add_node(
+        "generate",
+        generate
+    )
 
 
-# -----------------------------------
-# Flow
-# -----------------------------------
+    # -----------------------------------
+    # Flow
+    # -----------------------------------
 
-builder.set_entry_point("query_rewrite")
-# builder.add_edge("query_rewrite", "rag")
+    builder.set_entry_point("query_rewrite")
+    # builder.add_edge("query_rewrite", "rag")
 
-# builder.add_edge("rag", END)
+    # builder.add_edge("rag", END)
 
-builder.add_edge(
-    "query_rewrite",
-    "retrieve"
-)
+    builder.add_edge(
+        "query_rewrite",
+        "retrieve"
+    )
 
-builder.add_edge(
-    "retrieve",
-    "rerank"
-)
+    builder.add_edge(
+        "retrieve",
+        "rerank"
+    )
 
-builder.add_edge(
-    "rerank",
-    "compress"
-)
+    # builder.add_edge(
+    #     "retrieve",
+    #     "generate"
+    # )
 
-builder.add_edge(
-    "compress",
-    "generate"
-)
+    builder.add_edge(
+        "rerank",
+        "compress"
+    )
 
-builder.add_edge(
-    "generate",
-    END
-)
+    builder.add_edge(
+        "compress",
+        "generate"
+    )
 
-# -----------------------------------
-# Compile
-# -----------------------------------
-graph = builder.compile()
+    builder.add_edge(
+        "generate",
+        END
+    )
+
+    # -----------------------------------
+    # Compile
+    # -----------------------------------
+    return builder.compile()
+
+graph = build_graph()

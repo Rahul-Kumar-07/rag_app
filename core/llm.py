@@ -8,13 +8,19 @@
 #     # max_output_tokens=2048,
 # )
 
+import streamlit as st
+
 from langchain_openai import ChatOpenAI
 
 from core.config import OPENAI_API_KEY
 
-llm = ChatOpenAI(
-    model="openai/gpt-4o-mini",
-    api_key=OPENAI_API_KEY,
-    base_url="https://openrouter.ai/api/v1",
-    temperature=0.2
-)
+@st.cache_resource
+def get_llm():
+    return ChatOpenAI(
+        model="openai/gpt-4o-mini",
+        api_key=OPENAI_API_KEY,
+        base_url="https://openrouter.ai/api/v1",
+        temperature=0.2
+    )
+
+llm = get_llm()

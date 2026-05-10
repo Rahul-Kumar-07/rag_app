@@ -27,12 +27,27 @@
 #           )
 
 
+import streamlit as st
 from langchain_openai import OpenAIEmbeddings
 
 from core.config import OPENAI_API_KEY
 
-embeddings = OpenAIEmbeddings(
-    model="text-embedding-3-large",
-    api_key=OPENAI_API_KEY,
-    base_url="https://openrouter.ai/api/v1"
-)
+
+# -----------------------------------
+# Cached Embedding Model
+# -----------------------------------
+
+@st.cache_resource
+def get_embeddings():
+
+    return OpenAIEmbeddings(
+        model="text-embedding-3-large",
+        api_key=OPENAI_API_KEY,
+        base_url="https://openrouter.ai/api/v1"
+    )
+
+# -----------------------------------
+# Shared Embedding Instance
+# -----------------------------------
+
+embeddings = get_embeddings()
